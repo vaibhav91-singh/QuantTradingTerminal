@@ -21,9 +21,11 @@ export async function fetchBinanceKlines(symbol = 'BTCUSDT', interval = '1h', li
     formattedSymbol = 'PAXGUSDT';
   }
 
+  const safeInterval = (interval && interval !== 'undefined') ? interval : '1h';
+
   // Try Express Backend Proxy Endpoint First
   try {
-    let backendUrl = `/api/klines?symbol=${formattedSymbol}&interval=${interval}&limit=${limit}`;
+    let backendUrl = `/api/klines?symbol=${formattedSymbol}&interval=${safeInterval}&limit=${limit}`;
     if (endTime) backendUrl += `&endTime=${endTime}`;
     
     const response = await fetch(backendUrl);
@@ -51,7 +53,7 @@ export async function fetchBinanceKlines(symbol = 'BTCUSDT', interval = '1h', li
     'https://api3.binance.com/api/v3/klines'
   ];
 
-  const intervalMin = intervalToMinutes(interval);
+  const intervalMin = intervalToMinutes(safeInterval);
   const intervalMs = intervalMin * 60 * 1000;
   const maxChunks = Math.min(50, Math.ceil(limit / 1000));
   const nowMs = endTime ? Number(endTime) : Date.now();
@@ -59,7 +61,7 @@ export async function fetchBinanceKlines(symbol = 'BTCUSDT', interval = '1h', li
   const fetchChunk = async (chunkIndex) => {
     const chunkEndTime = nowMs - chunkIndex * (1000 * intervalMs);
     const baseUrl = baseUrls[chunkIndex % baseUrls.length];
-    const url = `${baseUrl}?symbol=${formattedSymbol}&interval=${interval}&limit=1000&endTime=${chunkEndTime}`;
+    const url = `${baseUrl}?symbol=${formattedSymbol}&interval=${safeInterval}&limit=1000&endTime=${chunkEndTime}`;
 
     try {
       const response = await fetch(url);

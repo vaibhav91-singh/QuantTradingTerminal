@@ -76,8 +76,14 @@ function formatCountdown(totalSecs) {
 
 export function App() {
   // Market & Asset State
-  const [symbol, setSymbol] = useState(() => localStorage.getItem('quant_symbol') || 'BTC/USDT');
-  const [interval, setInterval] = useState(() => localStorage.getItem('quant_interval') || '1h');
+  const [symbol, setSymbol] = useState(() => {
+    const saved = localStorage.getItem('quant_symbol');
+    return (saved && saved !== 'undefined') ? saved : 'BTC/USDT';
+  });
+  const [interval, setInterval] = useState(() => {
+    const saved = localStorage.getItem('quant_interval');
+    return (saved && saved !== 'undefined') ? saved : '1h';
+  });
   const [allCandles, setAllCandles] = useState([]);
   const [latestTickBar, setLatestTickBar] = useState(null);
   const [candleCountdown, setCandleCountdown] = useState('');
@@ -244,6 +250,7 @@ export function App() {
   useEffect(() => {
     activeTradesRef.current = activeTrades;
   }, [activeTrades]);
+  const activeTradeRef = activeTradesRef;
 
   const allCandlesRef = useRef(allCandles);
   useEffect(() => {

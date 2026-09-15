@@ -8,8 +8,9 @@ export class BinanceWebSocketManager {
     if (clean === 'XAUUSD' || clean === 'XAU' || clean === 'GOLD' || clean === 'XAUUSDT') {
       clean = 'PAXGUSDT';
     }
+    const safeInterval = (interval && interval !== 'undefined') ? interval : '1m';
     this.symbol = clean.toLowerCase();
-    this.interval = interval;
+    this.interval = safeInterval;
     this.onTick = onTickCallback;
     this.ws = null;
     this.isClosed = false;

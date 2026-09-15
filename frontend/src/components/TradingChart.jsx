@@ -630,7 +630,9 @@ export const TradingChart = React.memo(function TradingChart({
 
     try {
       if (!activeIndicators?.aiMl || !mlMarkers || !Array.isArray(mlMarkers) || mlMarkers.length === 0) {
-        candleSeriesRef.current.setMarkers([]);
+        if (candleSeriesRef.current && typeof candleSeriesRef.current.setMarkers === 'function') {
+          candleSeriesRef.current.setMarkers([]);
+        }
         return;
       }
 
@@ -645,7 +647,9 @@ export const TradingChart = React.memo(function TradingChart({
           text: `🤖 ${m.type} (${m.confidence || 75}%)`,
         }));
 
-      candleSeriesRef.current.setMarkers(validMarkers);
+      if (candleSeriesRef.current && typeof candleSeriesRef.current.setMarkers === 'function') {
+        candleSeriesRef.current.setMarkers(validMarkers);
+      }
     } catch (err) {
       console.warn('Failed to set AI ML chart markers:', err.message);
     }
