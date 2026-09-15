@@ -30,7 +30,10 @@ function intervalToMinutes(interval) {
  * Ultra-Fast Parallel Multi-Chunk Deep History Engine for 2-Year Candles across 1m, 5m, 15m, 1h, 4h, 1d
  */
 export async function getBinanceKlines(symbol = 'BTCUSDT', interval = '1h', limit = 15000, endTime = null) {
-  const formattedSymbol = symbol.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+  let formattedSymbol = symbol.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+  if (formattedSymbol === 'XAUUSD' || formattedSymbol === 'XAU' || formattedSymbol === 'GOLD' || formattedSymbol === 'XAUUSDT') {
+    formattedSymbol = 'PAXGUSDT';
+  }
   const cacheKey = `${formattedSymbol}_${interval}_${limit}_${endTime || 'latest'}`;
 
   // Check TTL Cache

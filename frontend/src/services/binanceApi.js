@@ -16,7 +16,10 @@ function intervalToMinutes(interval) {
  * Fetches BTC/USDT OHLCV klines via Express Backend Server Proxy (with parallel multi-chunk fallback up to 50,000 candles)
  */
 export async function fetchBinanceKlines(symbol = 'BTCUSDT', interval = '1h', limit = 15000, endTime = null) {
-  const formattedSymbol = symbol.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+  let formattedSymbol = symbol.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+  if (formattedSymbol === 'XAUUSD' || formattedSymbol === 'XAU' || formattedSymbol === 'GOLD' || formattedSymbol === 'XAUUSDT') {
+    formattedSymbol = 'PAXGUSDT';
+  }
 
   // Try Express Backend Proxy Endpoint First
   try {

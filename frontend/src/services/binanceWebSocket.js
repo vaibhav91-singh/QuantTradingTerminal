@@ -4,7 +4,11 @@
 
 export class BinanceWebSocketManager {
   constructor(symbol = 'BTCUSDT', interval = '1m', onTickCallback) {
-    this.symbol = symbol.replace(/[^A-Z0-9]/gi, '').toLowerCase();
+    let clean = symbol.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+    if (clean === 'XAUUSD' || clean === 'XAU' || clean === 'GOLD' || clean === 'XAUUSDT') {
+      clean = 'PAXGUSDT';
+    }
+    this.symbol = clean.toLowerCase();
     this.interval = interval;
     this.onTick = onTickCallback;
     this.ws = null;
