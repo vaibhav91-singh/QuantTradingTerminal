@@ -1,0 +1,16 @@
+{
+  "name": "quantterminal-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently --kill-others \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\"",
+    "start:all": "concurrently --kill-others \"npm --prefix backend start\" \"npm --prefix frontend run dev\"",
+    "backend": "npm --prefix backend start",
+    "frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

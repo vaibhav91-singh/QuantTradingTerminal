@@ -1,0 +1,120 @@
+{
+  "wallet": {
+    "startingBalance": 10000,
+    "balance": 9590.189487999995
+  },
+  "activeTrade": {
+    "id": "trade_1789398887869",
+    "side": "BUY",
+    "symbol": "BTC/USDT",
+    "entryPrice": 78506,
+    "sizeUsd": 7850.6,
+    "leverage": 10,
+    "quantity": 0.1,
+    "stopLoss": null,
+    "takeProfit": null,
+    "timestamp": 1789398887869
+  },
+  "tradeHistory": [
+    {
+      "id": "trade_1789243987247",
+      "side": "SELL",
+      "symbol": "BTC/USDT",
+      "entryPrice": 77181.95,
+      "sizeUsd": 10000,
+      "leverage": 10,
+      "quantity": 0.1296,
+      "stopLoss": 78568.73,
+      "takeProfit": 80269.23,
+      "timestamp": 1789244129517,
+      "exitPrice": 80269.23,
+      "pnlUsd": -400.11148799999984,
+      "pnlPct": -40.000025912794364,
+      "exitReason": "Take Profit Hit"
+    },
+    {
+      "id": "trade_1789244170828",
+      "side": "BUY",
+      "symbol": "BTC/USDT",
+      "entryPrice": 77183.66,
+      "sizeUsd": 10000,
+      "leverage": 10,
+      "quantity": 0.1296,
+      "stopLoss": 75794.35,
+      "takeProfit": 79499.17,
+      "timestamp": 1789244535722,
+      "exitPrice": 77167.73,
+      "pnlUsd": -2.0645280000009807,
+      "pnlPct": -0.20639083453683804,
+      "exitReason": "Manual Exit"
+    },
+    {
+      "id": "trade_1789244541484",
+      "side": "SELL",
+      "symbol": "BTC/USDT",
+      "entryPrice": 77167.73,
+      "sizeUsd": 10000,
+      "leverage": 10,
+      "quantity": 0.1296,
+      "stopLoss": 78556.75,
+      "takeProfit": 74852.7,
+      "timestamp": 1789244553726,
+      "exitPrice": 78556.75,
+      "pnlUsd": -180.01699200000053,
+      "pnlPct": -18.00001114455491,
+      "exitReason": "Stop Loss Hit"
+    },
+    {
+      "id": "trade_1789246537794",
+      "side": "BUY",
+      "symbol": "BTC/USDT",
+      "entryPrice": 77164.25,
+      "sizeUsd": 1000,
+      "leverage": 10,
+      "quantity": 0.1296,
+      "stopLoss": null,
+      "takeProfit": null,
+      "timestamp": 1789396347081,
+      "exitPrice": 78600.01,
+      "pnlUsd": 186.0744959999993,
+      "pnlPct": 18.60654383344612,
+      "exitReason": "Manual Exit"
+    },
+    {
+      "id": "trade_1789396371708",
+      "side": "BUY",
+      "symbol": "BTC/USDT",
+      "entryPrice": 78664,
+      "sizeUsd": 7866.4,
+      "leverage": 10,
+      "quantity": 0.1,
+      "stopLoss": null,
+      "takeProfit": null,
+      "timestamp": 1789398622018,
+      "exitPrice": 78501.26,
+      "pnlUsd": -16.274000000000523,
+      "pnlPct": -2.0687989423370947,
+      "exitReason": "Manual Exit"
+    },
+    {
+      "id": "trade_1789398781279",
+      "side": "BUY",
+      "symbol": "BTC/USDT",
+      "entryPrice": 78453.86,
+      "sizeUsd": 7845.39,
+      "leverage": 10,
+      "quantity": 0.1,
+      "stopLoss": null,
+      "takeProfit": null,
+      "timestamp": 1789398801740,
+      "exitPrice": 78479.68,
+      "pnlUsd": 2.5819999999992436,
+      "pnlPct": 0.3291106390430303,
+      "exitReason": "Manual Exit"
+    }
+  ],
+  "settings": {
+    "twelveDataKey": ""
+  },
+  "lastUpdated": 1789398887884
+}
