@@ -123,14 +123,19 @@ export function App() {
     }
   });
 
-  const [activeTrade, setActiveTrade] = useState(() => {
+  const [activeTrades, setActiveTrades] = useState(() => {
     try {
-      const saved = localStorage.getItem('quant_active_trade');
-      return saved ? JSON.parse(saved) : null;
+      const savedArr = localStorage.getItem('quant_active_trades');
+      if (savedArr) return JSON.parse(savedArr);
+      const savedSingle = localStorage.getItem('quant_active_trade');
+      if (savedSingle) return [JSON.parse(savedSingle)];
+      return [];
     } catch (e) {
-      return null;
+      return [];
     }
   });
+
+  const activeTrade = activeTrades.length > 0 ? activeTrades[0] : null;
 
   const [tradeHistory, setTradeHistory] = useState(() => {
     try {
@@ -184,16 +189,18 @@ export function App() {
       localStorage.setItem('quant_active_indicators', JSON.stringify(activeIndicators));
       localStorage.setItem('quant_wallet', JSON.stringify(wallet));
       localStorage.setItem('quant_trade_history', JSON.stringify(tradeHistory));
+      localStorage.setItem('quant_active_trades', JSON.stringify(activeTrades));
 
-      if (activeTrade) {
-        localStorage.setItem('quant_active_trade', JSON.stringify(activeTrade));
+      if (activeTrades.length > 0) {
+        localStorage.setItem('quant_active_trade', JSON.stringify(activeTrades[0]));
       } else {
         localStorage.removeItem('quant_active_trade');
+        localStorage.removeItem('quant_active_trades');
       }
     } catch (e) {
       console.warn('Failed to save user settings/trades to localStorage:', e);
     }
-  }, [symbol, interval, chartType, chartBgColor, chartGridStyle, rightSidebarTab, activeIndicators, wallet, activeTrade, tradeHistory]);
+  }, [symbol, interval, chartType, chartBgColor, chartGridStyle, rightSidebarTab, activeIndicators, wallet, activeTrades, tradeHistory]);
   const [hoveredPriceData, setHoveredPriceData] = useState(null);
 
   // Machine Learning AI Signal State
@@ -233,10 +240,10 @@ export function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const activeTradeRef = useRef(activeTrade);
+  const activeTradesRef = useRef(activeTrades);
   useEffect(() => {
-    activeTradeRef.current = activeTrade;
-  }, [activeTrade]);
+    activeTradesRef.current = activeTrades;
+  }, [activeTrades]);
 
   const allCandlesRef = useRef(allCandles);
   useEffect(() => {
@@ -520,38 +527,40 @@ export function App() {
     volume24h = periodBars.reduce((acc, b) => acc + (b.volume || 0), 0);
   }
 
-  const checkRiskTriggers = (bar, trade) => {
-    if (!trade || !bar) return;
+  const checkRiskTriggers = (bar, tradesArr) => {
+    if (!tradesArr || !Array.isArray(tradesArr) || tradesArr.length === 0 || !bar) return;
 
-    const isLong = trade.side === 'BUY';
+    tradesArr.forEach((trade) => {
+      const isLong = trade.side === 'BUY';
 
-    if (isLong) {
-      if (trade.stopLoss && bar.low <= trade.stopLoss) {
-        soundEngine.playSlLoss();
-        addToast(`Stop Loss Hit @ $${trade.stopLoss}`, 'warning');
-        handleClosePosition(trade.stopLoss, 'Stop Loss Hit');
-        return;
+      if (isLong) {
+        if (trade.stopLoss && bar.low <= trade.stopLoss) {
+          soundEngine.playSlLoss();
+          addToast(`Stop Loss Hit @ $${trade.stopLoss} (${trade.symbol})`, 'warning');
+          handleClosePosition(trade.id, trade.stopLoss, 'Stop Loss Hit');
+          return;
+        }
+        if (trade.takeProfit && bar.high >= trade.takeProfit) {
+          soundEngine.playTpWin();
+          addToast(`Take Profit Hit @ $${trade.takeProfit}! 🎉 (${trade.symbol})`, 'success');
+          handleClosePosition(trade.id, trade.takeProfit, 'Take Profit Hit');
+          return;
+        }
+      } else {
+        if (trade.stopLoss && bar.high >= trade.stopLoss) {
+          soundEngine.playSlLoss();
+          addToast(`Stop Loss Hit @ $${trade.stopLoss} (${trade.symbol})`, 'warning');
+          handleClosePosition(trade.id, trade.stopLoss, 'Stop Loss Hit');
+          return;
+        }
+        if (trade.takeProfit && bar.low <= trade.takeProfit) {
+          soundEngine.playTpWin();
+          addToast(`Take Profit Hit @ $${trade.takeProfit}! 🎉 (${trade.symbol})`, 'success');
+          handleClosePosition(trade.id, trade.takeProfit, 'Take Profit Hit');
+          return;
+        }
       }
-      if (trade.takeProfit && bar.high >= trade.takeProfit) {
-        soundEngine.playTpWin();
-        addToast(`Take Profit Hit @ $${trade.takeProfit}! Target Reached 🎉`, 'success');
-        handleClosePosition(trade.takeProfit, 'Take Profit Hit');
-        return;
-      }
-    } else {
-      if (trade.stopLoss && bar.high >= trade.stopLoss) {
-        soundEngine.playSlLoss();
-        addToast(`Stop Loss Hit @ $${trade.stopLoss}`, 'warning');
-        handleClosePosition(trade.stopLoss, 'Stop Loss Hit');
-        return;
-      }
-      if (trade.takeProfit && bar.low <= trade.takeProfit) {
-        soundEngine.playTpWin();
-        addToast(`Take Profit Hit @ $${trade.takeProfit}! Target Reached 🎉`, 'success');
-        handleClosePosition(trade.takeProfit, 'Take Profit Hit');
-        return;
-      }
-    }
+    });
   };
 
   useEffect(() => {
@@ -565,7 +574,7 @@ export function App() {
           }
           const nextIdx = prev + 1;
           const nextBar = allCandles[nextIdx];
-          checkRiskTriggers(nextBar, activeTradeRef.current);
+          checkRiskTriggers(nextBar, activeTradesRef.current);
           return nextIdx;
         });
       }, 1000 / playbackSpeed);
@@ -577,11 +586,11 @@ export function App() {
 
   const handleExecuteTrade = (orderData) => {
     const newTrade = {
-      id: `trade_${Date.now()}`,
+      id: `trade_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       ...orderData,
       timestamp: Date.now(),
     };
-    setActiveTrade(newTrade);
+    setActiveTrades((prev) => [...prev, newTrade]);
     soundEngine.playOrderPlaced();
     addToast(`${orderData.side} Order Executed @ $${orderData.entryPrice.toFixed(2)}`, 'success');
 
@@ -592,7 +601,7 @@ export function App() {
       mlData
     });
     setAuditResult(audit);
-    if (audit.flags.length > 0) {
+    if (audit.flags && audit.flags.length > 0) {
       setIsCoachModalOpen(true);
     }
 
@@ -605,7 +614,7 @@ export function App() {
 
   useHotkeys({
     onBuy: () => {
-      if (!activeTrade && currentPrice) {
+      if (currentPrice) {
         handleExecuteTrade({
           side: 'BUY',
           symbol,
@@ -619,7 +628,7 @@ export function App() {
       }
     },
     onSell: () => {
-      if (!activeTrade && currentPrice) {
+      if (currentPrice) {
         handleExecuteTrade({
           side: 'SELL',
           symbol,
@@ -636,7 +645,7 @@ export function App() {
       if (isReplayMode && replayIndex < allCandles.length - 1) {
         const nextIdx = replayIndex + 1;
         setReplayIndex(nextIdx);
-        checkRiskTriggers(allCandles[nextIdx], activeTradeRef.current);
+        checkRiskTriggers(allCandles[nextIdx], activeTradesRef.current);
       }
     },
     onReplayStepBack: () => {
@@ -648,7 +657,7 @@ export function App() {
 
   const voiceAssistant = useVoiceAssistant({
     onBuy: () => {
-      if (!activeTradeRef.current && currentPrice) {
+      if (currentPrice) {
         handleExecuteTrade({
           side: 'BUY',
           symbol,
@@ -662,7 +671,7 @@ export function App() {
       }
     },
     onSell: () => {
-      if (!activeTradeRef.current && currentPrice) {
+      if (currentPrice) {
         handleExecuteTrade({
           side: 'SELL',
           symbol,
@@ -700,73 +709,89 @@ export function App() {
     addToast
   });
 
-  const handleClosePosition = (exitPriceOverride = null, exitReason = 'Manual Exit') => {
-    const tradeToClose = activeTradeRef.current;
-    if (!tradeToClose) return;
+  const handleClosePosition = (tradeIdToClose = null, exitPriceOverride = null, exitReason = 'Manual Exit') => {
+    const currentTrades = activeTradesRef.current;
+    if (!currentTrades || currentTrades.length === 0) return;
 
-    const exitPrice = exitPriceOverride !== null ? exitPriceOverride : currentPrice;
-    const isLong = tradeToClose.side === 'BUY';
-    const entryPrice = tradeToClose.entryPrice;
-    const priceDiff = isLong ? (exitPrice - entryPrice) : (entryPrice - exitPrice);
+    const tradesToClose = tradeIdToClose 
+      ? currentTrades.filter((t) => t.id === tradeIdToClose)
+      : currentTrades;
 
-    const pnlUsd = priceDiff * tradeToClose.quantity;
-    const pnlPct = (priceDiff / entryPrice) * 100 * tradeToClose.leverage;
+    if (tradesToClose.length === 0) return;
+
+    let totalPnlUsd = 0;
+    const newlyClosed = [];
+
+    tradesToClose.forEach((tradeToClose) => {
+      const exitPrice = exitPriceOverride !== null ? exitPriceOverride : currentPrice;
+      const isLong = tradeToClose.side === 'BUY';
+      const entryPrice = tradeToClose.entryPrice;
+      const priceDiff = isLong ? (exitPrice - entryPrice) : (entryPrice - exitPrice);
+
+      const pnlUsd = priceDiff * tradeToClose.quantity;
+      const pnlPct = (priceDiff / entryPrice) * 100 * tradeToClose.leverage;
+
+      totalPnlUsd += pnlUsd;
+
+      const closedTrade = {
+        ...tradeToClose,
+        exitPrice,
+        pnlUsd,
+        pnlPct,
+        exitReason,
+        timestamp: Date.now(),
+      };
+      newlyClosed.push(closedTrade);
+    });
 
     setWallet((prev) => ({
       ...prev,
-      balance: prev.balance + pnlUsd,
+      balance: prev.balance + totalPnlUsd,
     }));
 
-    if (pnlUsd < 0) {
+    if (totalPnlUsd < 0) {
       setRecentLossTimestamp(Date.now());
     }
 
-    const closedTrade = {
-      ...tradeToClose,
-      exitPrice,
-      pnlUsd,
-      pnlPct,
-      exitReason,
-      timestamp: Date.now(),
-    };
+    setTradeHistory((prev) => [...prev, ...newlyClosed]);
 
-    setTradeHistory((prev) => [...prev, closedTrade]);
-    setActiveTrade(null);
+    const closedIds = new Set(tradesToClose.map((t) => t.id));
+    setActiveTrades((prev) => prev.filter((t) => !closedIds.has(t.id)));
+
     soundEngine.playOrderPlaced();
-    addToast(`Position Closed (${pnlUsd >= 0 ? '+' : ''}$${pnlUsd.toFixed(2)}) via ${exitReason}`, pnlUsd >= 0 ? 'success' : 'warning');
+    addToast(`Closed ${tradesToClose.length} Position(s) (${totalPnlUsd >= 0 ? '+' : ''}$${totalPnlUsd.toFixed(2)}) via ${exitReason}`, totalPnlUsd >= 0 ? 'success' : 'warning');
 
     fetch('/api/trades', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ trade: closedTrade })
+      body: JSON.stringify({ trades: newlyClosed })
     }).catch(e => console.warn('Failed to sync closed trade with backend:', e.message));
-
-    fetch('/api/wallet/position', { method: 'DELETE' }).catch(e => console.warn('Failed to delete position on backend:', e.message));
   };
 
   const handleUpdateSl = (val) => {
     const strVal = val.toString();
     setPendingSl(strVal);
-    if (activeTrade) {
-      setActiveTrade((prev) => prev ? ({ ...prev, stopLoss: parseFloat(val) }) : null);
+    if (activeTrades.length > 0) {
+      setActiveTrades((prev) => prev.map((t, i) => i === 0 ? ({ ...t, stopLoss: parseFloat(val) }) : t));
     }
   };
 
   const handleUpdateTp = (val) => {
     const strVal = val.toString();
     setPendingTp(strVal);
-    if (activeTrade) {
-      setActiveTrade((prev) => prev ? ({ ...prev, takeProfit: parseFloat(val) }) : null);
+    if (activeTrades.length > 0) {
+      setActiveTrades((prev) => prev.map((t, i) => i === 0 ? ({ ...t, takeProfit: parseFloat(val) }) : t));
     }
   };
 
   const handleResetAccount = () => {
     if (window.confirm('Reset Virtual Wallet balance to $10,000.00 and clear trade history?')) {
       setWallet({ startingBalance: 10000.00, balance: 10000.00 });
-      setActiveTrade(null);
+      setActiveTrades([]);
       setTradeHistory([]);
       try {
         localStorage.removeItem('quant_active_trade');
+        localStorage.removeItem('quant_active_trades');
         localStorage.removeItem('quant_trade_history');
         localStorage.removeItem('quant_wallet');
       } catch (e) {}
@@ -791,7 +816,6 @@ export function App() {
         symbol={symbol}
         onSymbolChange={(s) => {
           setSymbol(s);
-          setActiveTrade(null);
         }}
         interval={interval}
         onIntervalChange={setInterval}
@@ -901,7 +925,6 @@ export function App() {
           currentSymbol={symbol}
           onSelectSymbol={(s) => {
             setSymbol(s);
-            setActiveTrade(null);
           }}
           currentPrice={currentPrice}
           priceChange24h={priceChange24h}
@@ -1100,9 +1123,10 @@ export function App() {
             
             {/* 1. Open Position Data (Always visible at top when active) */}
             <ActivePositionCard
+              activeTrades={activeTrades}
               activeTrade={activeTrade}
               currentPrice={currentPrice}
-              onClosePosition={() => handleClosePosition(null, 'Manual Exit')}
+              onClosePosition={(tradeId) => handleClosePosition(tradeId, currentPrice, 'Manual Exit')}
             />
 
             {/* 2. TradingView Pro Style Tab Switcher */}
