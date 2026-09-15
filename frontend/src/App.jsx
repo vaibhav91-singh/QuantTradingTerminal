@@ -113,10 +113,33 @@ export function App() {
     }
   };
 
-  // Trading & Wallet Engine State
-  const [wallet, setWallet] = useState({ startingBalance: 10000.00, balance: 10000.00 });
-  const [activeTrade, setActiveTrade] = useState(null);
-  const [tradeHistory, setTradeHistory] = useState([]);
+  // Trading & Wallet Engine State (Persisted in Client Web Memory / localStorage)
+  const [wallet, setWallet] = useState(() => {
+    try {
+      const saved = localStorage.getItem('quant_wallet');
+      return saved ? JSON.parse(saved) : { startingBalance: 10000.00, balance: 10000.00 };
+    } catch (e) {
+      return { startingBalance: 10000.00, balance: 10000.00 };
+    }
+  });
+
+  const [activeTrade, setActiveTrade] = useState(() => {
+    try {
+      const saved = localStorage.getItem('quant_active_trade');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const [tradeHistory, setTradeHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem('quant_trade_history');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
 
   // Pending SL and TP inputs & enable toggles (synced with chart drag & drop and Order Panel)
   const [isSlEnabled, setIsSlEnabled] = useState(false);
@@ -149,7 +172,7 @@ export function App() {
     return defaultIndicators;
   });
 
-  // 100% Client-Side Web Memory Persistence for All User Settings & Indicator Toggles
+  // 100% Client-Side Web Memory Persistence for All User Settings, Indicator Toggles, Wallet & Active Trades
   useEffect(() => {
     try {
       localStorage.setItem('quant_symbol', symbol);
@@ -159,10 +182,18 @@ export function App() {
       localStorage.setItem('quant_chart_grid', chartGridStyle);
       localStorage.setItem('quant_right_sidebar_tab', rightSidebarTab);
       localStorage.setItem('quant_active_indicators', JSON.stringify(activeIndicators));
+      localStorage.setItem('quant_wallet', JSON.stringify(wallet));
+      localStorage.setItem('quant_trade_history', JSON.stringify(tradeHistory));
+
+      if (activeTrade) {
+        localStorage.setItem('quant_active_trade', JSON.stringify(activeTrade));
+      } else {
+        localStorage.removeItem('quant_active_trade');
+      }
     } catch (e) {
-      console.warn('Failed to save user settings to localStorage:', e);
+      console.warn('Failed to save user settings/trades to localStorage:', e);
     }
-  }, [symbol, interval, chartType, chartBgColor, chartGridStyle, rightSidebarTab, activeIndicators]);
+  }, [symbol, interval, chartType, chartBgColor, chartGridStyle, rightSidebarTab, activeIndicators, wallet, activeTrade, tradeHistory]);
   const [hoveredPriceData, setHoveredPriceData] = useState(null);
 
   // Machine Learning AI Signal State
@@ -734,6 +765,11 @@ export function App() {
       setWallet({ startingBalance: 10000.00, balance: 10000.00 });
       setActiveTrade(null);
       setTradeHistory([]);
+      try {
+        localStorage.removeItem('quant_active_trade');
+        localStorage.removeItem('quant_trade_history');
+        localStorage.removeItem('quant_wallet');
+      } catch (e) {}
 
       fetch('/api/wallet/reset', { method: 'POST' }).catch(e => console.warn('Failed to reset backend wallet:', e.message));
       fetch('/api/trades', { method: 'DELETE' }).catch(e => console.warn('Failed to clear backend trades:', e.message));
